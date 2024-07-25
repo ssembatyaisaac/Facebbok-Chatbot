@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const OpenAI = require('openai');
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
 }
@@ -30,9 +30,9 @@ app.post('/webhook', (req, res) => {
     console.log(req.body);
     if (req.body.object === 'page') {
         req.body.entry.forEach((entry) => {
-            entry.messaging.forEach((event) => {
+            entry.messaging.forEach(async (event) => {
                 if (event.message && event.message.text) {
-                    sendMessage(event);
+                    await sendMessage(event);
                 }
             });
         });
@@ -41,9 +41,9 @@ app.post('/webhook', (req, res) => {
 });
 
 const request = require('request');
-function sendMessage(event) {
+async function sendMessage(event) {
     let sender = event.sender.id;
-    let text = event.message.text;
+    let text = await samSays(event.message.text);
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
@@ -60,4 +60,28 @@ function sendMessage(event) {
             console.log('Error: ', response.body.error);
         }
     });
+}
+
+const openai = new OpenAI();
+
+async function samSays(text) {
+    try {
+        openai.apiKey = process.env.OPENAI_API_KEY;
+
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "system", content: text }],
+            model: "gpt-4o-mini",
+        });
+
+        let responseText = completion.choices[0].message.content;
+
+        // Trim the response to a length of 2000 characters
+        if (responseText.length > 2000) {
+            responseText = responseText.substring(0, 2000);
+        }
+
+        return responseText;
+    } catch (error) {
+        return `Error: ${error.message}`;
+    }
 }
