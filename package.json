@@ -4,7 +4,8 @@
   "description": "Creating a facebook chat with node.js",
   "main": "webhook.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node webhook.js"
   },
   "author": "Ssembatya Isaac",
   "license": "ISC",
